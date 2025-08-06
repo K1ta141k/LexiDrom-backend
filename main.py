@@ -13,11 +13,12 @@ from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
 # Import application modules
-from app.api import auth, text_comparison, activities, random_text
+from app.api import auth, text_comparison, activities, random_text, code, code_summary_evaluation
 from app.core.auth import get_current_user
 from app.services.activity_tracker import ActivityTracker
 from app.services.supabase_manager import SupabaseManager
 from app.services.race_dataset_service import RACEDatasetService
+from app.services.code_dataset_service import CodeDatasetService
 from app.models.schemas import User
 
 # Environment variables
@@ -28,6 +29,7 @@ load_dotenv()
 tracker = None
 supabase = None
 race_service = None
+code_service = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -59,17 +61,29 @@ async def lifespan(app: FastAPI):
     else:
         print("⚠️ RACE dataset loading failed - will retry on first use")
     
+    # Initialize Code Dataset Service
+    code_service = CodeDatasetService()
+    code_load_success = await code_service.load_dataset()
+    if code_load_success:
+        print("✅ Code dataset loaded successfully")
+    else:
+        print("⚠️ Code dataset loading failed - will retry on first use")
+    
     # Set global services for API routes
     auth.tracker = tracker
     text_comparison.tracker = tracker
     text_comparison.comparison_service = None  # Will be initialized on first use
     activities.supabase = supabase
     random_text.race_service = race_service
+    code.code_service = code_service
+    code_summary_evaluation.tracker = tracker
+    code_summary_evaluation.evaluation_service = None  # Will be initialized on first use
     
     print(f"🔧 Global services initialized:")
     print(f"   Tracker: {'✅ Available' if tracker else '❌ Not available'}")
     print(f"   Supabase: {'✅ Available' if supabase else '❌ Not available'}")
     print(f"   RACE Dataset: {'✅ Available' if race_service and race_service.is_available() else '❌ Not available'}")
+    print(f"   Code Dataset: {'✅ Available' if code_service and code_service.is_available() else '❌ Not available'}")
     if tracker and tracker.supabase:
         print(f"   Tracker-Supabase connection: {'✅ Available' if tracker.supabase else '❌ Not available'}")
     
@@ -100,9 +114,11 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://127.0.0.1:8000",
         "http://127.0.0.1:5173",
-        # Add your production domain here
-        "https://your-production-domain.com",
-        "https://www.your-production-domain.com"
+        # Production domains - Update these with your actual domains
+        "https://lexidrom.com",
+        "https://www.lexidrom.com",
+        "https://api.lexidrom.com",
+        "https://app.lexidrom.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -127,11 +143,12 @@ async def health_check():
     health_status = {
         "status": "healthy",
         "timestamp": datetime.datetime.utcnow().isoformat(),
-        "services": {
-            "supabase": "unknown",
-            "activity_tracker": "unknown",
-            "race_dataset": "unknown"
-        }
+            "services": {
+        "supabase": "unknown",
+        "activity_tracker": "unknown",
+        "race_dataset": "unknown",
+        "code_dataset": "unknown"
+    }
     }
     
     # Check service availability
@@ -141,6 +158,8 @@ async def health_check():
         health_status["services"]["activity_tracker"] = "available"
     if 'race_service' in globals() and race_service and race_service.is_available():
         health_status["services"]["race_dataset"] = "available"
+    if 'code_service' in globals() and code_service and code_service.is_available():
+        health_status["services"]["code_dataset"] = "available"
     
     return health_status
 
@@ -157,6 +176,8 @@ app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(text_comparison.router, prefix="/compare-texts", tags=["Text Comparison"])
 app.include_router(activities.router, prefix="/activities", tags=["Activities"])
 app.include_router(random_text.router, prefix="/random-text", tags=["Random Text"])
+app.include_router(code.router, prefix="/code", tags=["Code Examples"])
+app.include_router(code_summary_evaluation.router, prefix="/code-evaluation", tags=["Code Summary Evaluation"])
 
 # Global exception handler
 @app.exception_handler(Exception)

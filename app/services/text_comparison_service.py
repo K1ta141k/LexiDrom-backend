@@ -81,7 +81,6 @@ class TextComparisonService:
         prompt = f"""
 You are an expert text analyst. Compare the original text with the user's summary and provide a detailed analysis.
 
-**Reading Mode**: {reading_mode} - {mode_desc}
 
 **Original Text**:
 {original_text}
@@ -91,11 +90,10 @@ You are an expert text analyst. Compare the original text with the user's summar
 
 **Analysis Instructions**:
 1. Evaluate how well the summary captures the key points from the original text
-2. Consider the reading mode context: {mode_desc}
-3. Provide an accuracy score from 0 to 100
-4. Identify correctly captured points
-5. Identify important points that were missed
-6. Identify any incorrect or misleading information
+2. Provide an accuracy score from 0 to 100
+3. Identify correctly captured points
+4. Identify important points that were missed
+5. Identify any incorrect or misleading information
 
 **Response Format**:
 Please respond in the following JSON format:

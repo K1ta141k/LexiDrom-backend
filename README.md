@@ -7,10 +7,10 @@ A sophisticated text comparison and analysis service built with FastAPI, featuri
 - **Text Comparison**: Advanced text similarity analysis and comparison
 - **Google OAuth**: Secure authentication with Google accounts
 - **Supabase Integration**: Real-time database operations and user management
-- **AI-Powered Analysis**: Integration with Hugging Face models for text processing
+- **AI-Powered Analysis**: Integration with Google's Gemma-3n model for text processing
 - **Activity Tracking**: Comprehensive user activity monitoring
 - **RACE Dataset**: Educational text dataset integration for learning analytics
-- **Audio Transcription**: Speech-to-text capabilities using Hugging Face models
+- **Audio Transcription**: Speech-to-text capabilities (planned feature)
 - **Cloud Ready**: Optimized for Google Cloud Platform deployment
 
 ## 🛠️ Tech Stack
@@ -18,7 +18,7 @@ A sophisticated text comparison and analysis service built with FastAPI, featuri
 - **Backend**: FastAPI (Python 3.12)
 - **Authentication**: Google OAuth, JWT tokens
 - **Database**: Supabase (PostgreSQL)
-- **AI/ML**: Hugging Face Transformers, Google Generative AI
+- **AI/ML**: Google Generative AI (Gemma-3n), HuggingFace Datasets
 - **Deployment**: Google Cloud Run, Docker
 - **Monitoring**: Cloud Logging, Health checks
 
@@ -27,8 +27,8 @@ A sophisticated text comparison and analysis service built with FastAPI, featuri
 - Python 3.12+
 - Google Cloud Platform account
 - Supabase project
-- Hugging Face API token
 - Google OAuth credentials
+- Google Generative AI API key
 
 ## 🚀 Quick Start
 
@@ -80,11 +80,8 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 # JWT Configuration
 JWT_SECRET_KEY=your_jwt_secret_key
 
-# Hugging Face
-HUGGINGFACE_API_TOKEN=your_huggingface_token
-
-# Optional: Google Generative AI
-GOOGLE_GENERATIVE_AI_KEY=your_google_ai_key
+# Google Generative AI
+GOOGLE_API_KEY=your_google_ai_key
 ```
 
 ## 🏗️ Project Structure
@@ -126,8 +123,8 @@ lexidrom/
 - `GET /auth/me` - Get current user info
 
 ### Text Comparison
-- `POST /compare-texts/similarity` - Compare text similarity
-- `POST /compare-texts/analyze` - Detailed text analysis
+- `POST /compare-texts/` - Compare text similarity (main endpoint)
+- `POST /compare-texts/public` - Public text comparison endpoint
 - `GET /compare-texts/history` - Get comparison history
 
 ### Activities
@@ -142,6 +139,43 @@ lexidrom/
 ### Health Checks
 - `GET /` - Basic health check
 - `GET /health` - Detailed health status
+
+## 🔌 External APIs Used
+
+### 1. Google Generative AI API
+- **Purpose**: Advanced text comparison and analysis
+- **Model**: Gemma-3n-e4b-it
+- **Environment Variable**: `GOOGLE_API_KEY`
+- **Features**: 
+  - AI-powered text similarity analysis
+  - Multiple reading mode support (skimming, comprehension, study, etc.)
+  - Detailed feedback with accuracy scores
+  - Fallback to simple comparison when API unavailable
+
+### 2. Supabase API
+- **Purpose**: Database operations and user management
+- **Environment Variables**: `SUPABASE_URL`, `SUPABASE_KEY`
+- **Features**:
+  - User authentication and management
+  - Activity tracking and analytics
+  - Real-time database operations
+  - PostgreSQL backend
+
+### 3. Google OAuth API
+- **Purpose**: User authentication
+- **Environment Variables**: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- **Features**:
+  - Secure Google account authentication
+  - JWT token generation and verification
+  - User session management
+
+### 4. HuggingFace Datasets API
+- **Purpose**: RACE dataset access for random text generation
+- **Authentication**: Not required (public dataset)
+- **Features**:
+  - Educational text dataset integration
+  - Random text generation for testing
+  - 27,827 passages from English exams
 
 ## 🚀 Deployment
 
@@ -170,7 +204,7 @@ gcloud services enable containerregistry.googleapis.com
 ```bash
 gcloud run services update lexidrom \
     --region=us-central1 \
-    --set-env-vars="SUPABASE_URL=your-url,SUPABASE_KEY=your-key,HUGGINGFACE_API_TOKEN=your-token"
+    --set-env-vars="SUPABASE_URL=your-url,SUPABASE_KEY=your-key,GOOGLE_CLIENT_ID=your-client-id,GOOGLE_CLIENT_SECRET=your-client-secret,JWT_SECRET_KEY=your-jwt-secret,GOOGLE_API_KEY=your-google-ai-key"
 ```
 
 ### Manual Deployment

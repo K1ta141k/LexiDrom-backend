@@ -209,6 +209,8 @@ class SupabaseManager:
                     activity_type=activity_data["activity_type"],
                     accuracy_score=activity_data.get("accuracy_score"),
                     reading_mode=activity_data.get("reading_mode"),
+                    wpm=activity_data.get("wpm"),
+                    lpm=activity_data.get("lpm"),
                     created_at=datetime.fromisoformat(activity_data["created_at"]),
                     ip_address=activity_data.get("ip_address"),
                     user_agent=activity_data.get("user_agent")
@@ -258,6 +260,8 @@ class SupabaseManager:
                     activity_type=activity_data["activity_type"],
                     accuracy_score=activity_data.get("accuracy_score"),
                     reading_mode=activity_data.get("reading_mode"),
+                    wpm=activity_data.get("wpm"),
+                    lpm=activity_data.get("lpm"),
                     created_at=datetime.fromisoformat(activity_data["created_at"]),
                     ip_address=activity_data.get("ip_address"),
                     user_agent=activity_data.get("user_agent")

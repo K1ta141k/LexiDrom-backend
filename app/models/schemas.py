@@ -25,6 +25,8 @@ class TextComparisonRequest(BaseModel):
     original_text: str = Field(..., min_length=1, description="Original text to compare against")
     summary_text: str = Field(..., min_length=1, description="User's summary text")
     reading_mode: str = Field(default="detailed", description="Reading mode for analysis")
+    wpm: Optional[int] = Field(default=None, ge=1, le=1000, description="Words per minute reading speed")
+    lpm: Optional[int] = Field(default=None, ge=1, le=100, description="Lines per minute reading speed")
     source: Optional[str] = Field(default="web", description="Source of the request")
     session_id: Optional[str] = Field(default=None, description="Unique session identifier")
     user_agent: Optional[str] = Field(default=None, description="Browser user agent string")
@@ -41,6 +43,27 @@ class TextComparisonResponse(BaseModel):
     wrong_points: List[str] = Field(default=[], description="Incorrect or misleading information")
     tracking_status: str = Field(default="tracked", description="Status of activity tracking")
 
+# Code Summary Evaluation Models
+class CodeSummaryEvaluationRequest(BaseModel):
+    original_code: str = Field(..., min_length=1, description="Original code to evaluate against")
+    summary_text: str = Field(..., min_length=1, description="User's summary of the code")
+    language: str = Field(default="python", description="Programming language of the code")
+    evaluation_mode: str = Field(default="comprehensive", description="Evaluation mode for analysis")
+    source: Optional[str] = Field(default="web", description="Source of the request")
+    session_id: Optional[str] = Field(default=None, description="Unique session identifier")
+    user_agent: Optional[str] = Field(default=None, description="Browser user agent string")
+    ip_address: Optional[str] = Field(default=None, description="Client IP address")
+    category: Optional[str] = Field(default="educational", description="Content category")
+    difficulty_level: Optional[str] = Field(default="medium", description="Code difficulty level")
+    tags: Optional[List[str]] = Field(default=[], description="Array of tags for categorization")
+
+class CodeSummaryEvaluationResponse(BaseModel):
+    accuracy_score: int = Field(..., ge=0, le=100, description="Accuracy score from 0 to 100")
+    correct_points: List[str] = Field(default=[], description="Correctly captured points about the code")
+    missed_points: List[str] = Field(default=[], description="Important code aspects that were missed")
+    wrong_points: List[str] = Field(default=[], description="Incorrect or misleading information about the code")
+    tracking_status: str = Field(default="tracked", description="Status of activity tracking")
+
 # Activity Models
 class Activity(BaseModel):
     id: int
@@ -49,6 +72,8 @@ class Activity(BaseModel):
     activity_type: str
     accuracy_score: Optional[int] = None
     reading_mode: Optional[str] = None
+    wpm: Optional[int] = None
+    lpm: Optional[int] = None
     created_at: datetime
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None

@@ -11,18 +11,18 @@ This guide provides step-by-step instructions for deploying LexiDrom to Google C
 
 ### 2. Required APIs
 Enable the following APIs in your Google Cloud project:
-- Cloud Build API
-- Cloud Run API
-- Container Registry API
+- Cloud Build API (`cloudbuild.googleapis.com`)
+- Cloud Run Admin API (`run.googleapis.com`)
+- Container Registry API (`containerregistry.googleapis.com`)
 
 ### 3. Environment Variables
 Prepare the following environment variables:
 - `SUPABASE_URL`: Your Supabase project URL
 - `SUPABASE_KEY`: Your Supabase service role key
-- `HUGGINGFACE_API_TOKEN`: Your Hugging Face API token
 - `GOOGLE_CLIENT_ID`: Your Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET`: Your Google OAuth client secret
 - `JWT_SECRET_KEY`: Secret key for JWT token signing
+- `GOOGLE_API_KEY`: Your Google Generative AI API key
 
 ## Quick Deployment
 
@@ -37,7 +37,12 @@ cd lexidrom
 2. **Install Google Cloud SDK**
 ```bash
 # Windows
-winget install Google.CloudSDK
+# Option 1: Using winget (if the above doesn't work, try this)
+winget install Google.CloudSDK --include-unknown
+
+# Option 2: Manual installation
+# Download from: https://cloud.google.com/sdk/docs/install#windows
+# Run the installer and follow the prompts
 
 # macOS
 brew install google-cloud-sdk
@@ -74,7 +79,7 @@ gcloud services enable containerregistry.googleapis.com
 ```bash
 gcloud run services update lexidrom \
     --region=us-central1 \
-    --set-env-vars="SUPABASE_URL=your-supabase-url,SUPABASE_KEY=your-supabase-key,HUGGINGFACE_API_TOKEN=your-huggingface-token,GOOGLE_CLIENT_ID=your-google-client-id,GOOGLE_CLIENT_SECRET=your-google-client-secret,JWT_SECRET_KEY=your-jwt-secret"
+    --set-env-vars="SUPABASE_URL=your-supabase-url,SUPABASE_KEY=your-supabase-key,GOOGLE_CLIENT_ID=your-google-client-id,GOOGLE_CLIENT_SECRET=your-google-client-secret,JWT_SECRET_KEY=your-jwt-secret,GOOGLE_API_KEY=your-google-ai-key"
 ```
 
 ### Option 2: Manual Deployment
@@ -109,7 +114,7 @@ gcloud run deploy $SERVICE_NAME \
 ```bash
 gcloud run services update lexidrom \
     --region=us-central1 \
-    --set-env-vars="SUPABASE_URL=your-supabase-url,SUPABASE_KEY=your-supabase-key,HUGGINGFACE_API_TOKEN=your-huggingface-token,GOOGLE_CLIENT_ID=your-google-client-id,GOOGLE_CLIENT_SECRET=your-google-client-secret,JWT_SECRET_KEY=your-jwt-secret"
+    --set-env-vars="SUPABASE_URL=your-supabase-url,SUPABASE_KEY=your-supabase-key,GOOGLE_CLIENT_ID=your-google-client-id,GOOGLE_CLIENT_SECRET=your-google-client-secret,JWT_SECRET_KEY=your-jwt-secret,GOOGLE_API_KEY=your-google-ai-key"
 ```
 
 ## Configuration
@@ -130,12 +135,48 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 # JWT Configuration
 JWT_SECRET_KEY=your-secure-jwt-secret
 
-# Hugging Face
-HUGGINGFACE_API_TOKEN=your-huggingface-token
-
-# Optional: Google Generative AI
-GOOGLE_GENERATIVE_AI_KEY=your-google-ai-key
+# Google Generative AI
+GOOGLE_API_KEY=your-google-ai-key
 ```
+
+### Required Google Cloud APIs
+
+Enable these APIs in your Google Cloud project:
+
+1. **Cloud Build API** (`cloudbuild.googleapis.com`)
+   - **Purpose**: Building and deploying Docker containers
+   - **Required for**: Automated deployment process
+
+2. **Cloud Run Admin API** (`run.googleapis.com`)
+   - **Purpose**: Managing Cloud Run services
+   - **Required for**: Deploying and managing the application
+
+3. **Container Registry API** (`containerregistry.googleapis.com`)
+   - **Purpose**: Storing and managing Docker images
+   - **Required for**: Image storage and retrieval
+
+### External API Requirements
+
+1. **Google Generative AI API**
+   - **Purpose**: AI-powered text comparison
+   - **Model**: Gemma-3n-e4b-it
+   - **Setup**: Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - **Usage**: Advanced text analysis and comparison
+
+2. **Supabase API**
+   - **Purpose**: Database and user management
+   - **Setup**: Create project at [supabase.com](https://supabase.com)
+   - **Usage**: User authentication, activity tracking, data persistence
+
+3. **Google OAuth API**
+   - **Purpose**: User authentication
+   - **Setup**: Configure OAuth credentials in [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   - **Usage**: Secure user login and session management
+
+4. **HuggingFace Datasets API**
+   - **Purpose**: RACE dataset access
+   - **Authentication**: Not required (public dataset)
+   - **Usage**: Random text generation for testing
 
 ### CORS Configuration
 
@@ -191,7 +232,51 @@ gcloud run services update lexidrom \
 
 ## Troubleshooting
 
-### Common Issues
+### Authentication Consent Issues
+
+If you encounter the error "https://www.googleapis.com/auth/cloud-platform scope is required but not consented":
+
+1. **Clear all existing credentials**:
+   ```bash
+   gcloud auth revoke --all
+   ```
+
+2. **Login with no browser (recommended for this issue)**:
+   ```bash
+   gcloud auth application-default login --no-browser
+   ```
+
+3. **Follow the manual authentication steps**:
+   - Copy the URL provided in the terminal
+   - Open it in your browser
+   - **Important**: Make sure to check all the required scopes, especially:
+     - `https://www.googleapis.com/auth/cloud-platform`
+     - `https://www.googleapis.com/auth/userinfo.email`
+     - `https://www.googleapis.com/auth/sqlservice.login`
+   - Complete the authentication process
+   - Copy the authorization code back to the terminal
+
+4. **Verify authentication**:
+   ```bash
+   gcloud auth list
+   gcloud config list
+   ```
+
+### Installation Issues
+
+1. **Google Cloud SDK Installation Problems**
+   - **Windows**: If winget fails, download manually from [cloud.google.com/sdk/docs/install#windows](https://cloud.google.com/sdk/docs/install#windows)
+   - **Permission Issues**: Run PowerShell as Administrator
+   - **Path Issues**: Ensure the SDK is added to your PATH environment variable
+
+2. **Authentication Issues**
+   - **Clear existing credentials**: `gcloud auth revoke --all`
+   - **Re-authenticate**: `gcloud auth login`
+   - **Set application default**: `gcloud auth application-default login`
+   - **If consent error occurs**: Run `gcloud auth application-default login --no-browser` and follow the manual authentication steps
+   - **Ensure proper scopes**: Make sure to consent to all required scopes including `https://www.googleapis.com/auth/cloud-platform`
+
+### Deployment Issues
 
 1. **Build Failures**
    - Check `requirements.txt` for compatibility

@@ -22,6 +22,8 @@ class ActivityTracker:
         missed_points: List[str],
         wrong_points: List[str],
         reading_mode: str = "detailed",
+        wpm: Optional[int] = None,
+        lpm: Optional[int] = None,
         additional_params: Optional[Dict[str, Any]] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None
@@ -46,6 +48,8 @@ class ActivityTracker:
                 "missed_points_count": len(missed_points or []),
                 "wrong_points_count": len(wrong_points or []),
                 "reading_mode": reading_mode,
+                "wpm": wpm,
+                "lpm": lpm,
                 "additional_params": additional_params or {},
                 "ip_address": ip_address,
                 "user_agent": user_agent,
@@ -90,6 +94,86 @@ class ActivityTracker:
             print(f"❌ Error tracking text comparison activity: {e}")
             return False
     
+    async def track_code_summary_evaluation(
+        self,
+        user_email: Optional[str],
+        original_code: str,
+        summary_text: str,
+        accuracy_score: int,
+        correct_points: List[str],
+        missed_points: List[str],
+        wrong_points: List[str],
+        language: str = "python",
+        evaluation_mode: str = "comprehensive",
+        additional_params: Optional[Dict[str, Any]] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None
+    ) -> bool:
+        """Track code summary evaluation activity"""
+        try:
+            # Determine user type
+            user_type = "authenticated" if user_email else "guest"
+            
+            # Prepare activity data
+            activity_data = {
+                "user_email": user_email or "guest",
+                "user_type": user_type,
+                "activity_type": "code_summary_evaluation",
+                "original_code": original_code,
+                "summary_text": summary_text,
+                "accuracy_score": accuracy_score,
+                "correct_points": correct_points or [],
+                "missed_points": missed_points or [],
+                "wrong_points": wrong_points or [],
+                "correct_points_count": len(correct_points or []),
+                "missed_points_count": len(missed_points or []),
+                "wrong_points_count": len(wrong_points or []),
+                "language": language,
+                "evaluation_mode": evaluation_mode,
+                "additional_params": additional_params or {},
+                "ip_address": ip_address,
+                "user_agent": user_agent,
+                "created_at": datetime.now().isoformat()
+            }
+            
+            # Log to Supabase if available
+            print(f"🔍 Checking Supabase availability...")
+            print(f"   Supabase instance: {'✅ Available' if self.supabase else '❌ Not available'}")
+            if self.supabase:
+                connected = self.supabase.is_connected()
+                print(f"   Connection status: {'✅ Connected' if connected else '❌ Not connected'}")
+            
+            if self.supabase:
+                # Try to reconnect if not connected
+                if not self.supabase.is_connected():
+                    print(f"🔄 Attempting to reconnect to Supabase...")
+                    await self.supabase.connect()
+                
+                if self.supabase.is_connected():
+                    print(f"📊 Logging code evaluation activity to database for {user_type} user...")
+                    success = await self.supabase.log_activity(activity_data)
+                    if success:
+                        print(f"✅ Code evaluation activity tracking completed successfully")
+                        
+                        # Verify the record was actually created
+                        if user_email:
+                            await self.supabase.verify_recent_activity(user_email, "code_summary_evaluation", 1)
+                        
+                        return True
+                    else:
+                        print("⚠️ Failed to log code evaluation activity to Supabase")
+                        return False
+                else:
+                    print("⚠️ Supabase connection failed after retry")
+                    return False
+            else:
+                print("⚠️ Supabase not available, code evaluation activity not tracked")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error tracking code summary evaluation activity: {e}")
+            return False
+
     async def track_user_login(
         self,
         user_email: str,
