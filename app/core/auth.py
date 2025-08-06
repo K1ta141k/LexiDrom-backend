@@ -13,16 +13,29 @@ from google.auth.transport import requests
 from google.oauth2 import id_token
 from app.models.schemas import User
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 # Security scheme
 security = HTTPBearer()
 
 # JWT settings
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not JWT_SECRET_KEY:
+    raise ValueError("JWT_SECRET_KEY environment variable is required")
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Google OAuth settings
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+
+# Debug: Print auth module environment status (only in development)
+if os.getenv("ENVIRONMENT") == "development":
+    print(f"🔐 Auth Module - GOOGLE_CLIENT_ID: {'✅ Set' if GOOGLE_CLIENT_ID else '❌ Not set'}")
+    if GOOGLE_CLIENT_ID:
+        print(f"   Client ID length: {len(GOOGLE_CLIENT_ID)}")
+        print(f"   Client ID starts with: {GOOGLE_CLIENT_ID[:10]}...")
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create JWT access token"""
@@ -132,6 +145,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 def get_google_oauth_url() -> str:
     """Generate Google OAuth URL"""
+    if not GOOGLE_CLIENT_ID:
+        raise ValueError("GOOGLE_CLIENT_ID not configured")
+    
     client_id = GOOGLE_CLIENT_ID
     redirect_uri = os.getenv("FRONTEND_URL", "http://localhost:3000") + "/auth/callback"
     scope = "openid email profile"

@@ -77,6 +77,21 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information"""
     return current_user
 
+@router.get("/auth-status")
+async def get_auth_status():
+    """Get authentication configuration status"""
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    return {
+        "google_client_id_configured": bool(os.getenv("GOOGLE_CLIENT_ID")),
+        "google_client_secret_configured": bool(os.getenv("GOOGLE_CLIENT_SECRET")),
+        "jwt_secret_configured": bool(os.getenv("JWT_SECRET_KEY")),
+        "environment": os.getenv("ENVIRONMENT", "development"),
+        "message": "Check /auth-status to verify your configuration"
+    }
+
 # Mock endpoints for testing (remove in production)
 @router.post("/mock-login", response_model=Token)
 async def mock_login(request: GoogleLoginRequest, http_req: Request):

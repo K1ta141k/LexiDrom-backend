@@ -25,6 +25,15 @@ from app.models.schemas import User
 from dotenv import load_dotenv
 load_dotenv()
 
+# Debug: Print environment variable status (only in development)
+if os.getenv("ENVIRONMENT") == "development":
+    print("🔧 Environment Variables Status:")
+    print(f"   GOOGLE_CLIENT_ID: {'✅ Set' if os.getenv('GOOGLE_CLIENT_ID') else '❌ Not set'}")
+    print(f"   GOOGLE_CLIENT_SECRET: {'✅ Set' if os.getenv('GOOGLE_CLIENT_SECRET') else '❌ Not set'}")
+    print(f"   JWT_SECRET_KEY: {'✅ Set' if os.getenv('JWT_SECRET_KEY') else '❌ Not set'}")
+    print(f"   SUPABASE_URL: {'✅ Set' if os.getenv('SUPABASE_URL') else '❌ Not set'}")
+    print(f"   GOOGLE_API_KEY: {'✅ Set' if os.getenv('GOOGLE_API_KEY') else '❌ Not set'}")
+
 # Global services
 tracker = None
 supabase = None
