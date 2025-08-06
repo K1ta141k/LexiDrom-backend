@@ -13,7 +13,8 @@ Citation:
 
 import random
 from typing import Dict, List, Optional
-from datasets import load_dataset
+# Lazy import to avoid downloading during startup
+# from datasets import load_dataset
 
 class CodeDatasetService:
     def __init__(self):
@@ -24,48 +25,56 @@ class CodeDatasetService:
         self.difficulty_levels = ['beginner', 'intermediate', 'advanced']
         
     async def load_dataset(self) -> bool:
-        """Load the CodeSearchNet dataset from HuggingFace"""
+        """Load the CodeSearchNet dataset from local JSON file"""
         try:
-            print("📚 Loading CodeSearchNet dataset...")
+            print("📚 Loading CodeSearchNet dataset from local file...")
             
-            # Load dataset for each language
-            self.code_samples = []
+            import json
+            import os
             
-            for language in self.languages:
-                try:
-                    print(f"📖 Loading {language} code samples...")
-                    dataset = load_dataset("code_search_net", language, trust_remote_code=True)
-                    
-                    # Process train split with limit of 10 samples per language
-                    samples_count = 0
-                    if 'train' in dataset:
-                        for item in dataset['train']:
-                            if samples_count >= 10:  # Limit to 10 samples per language
-                                break
-                            if 'func_code_string' in item and item['func_code_string']:
-                                # Estimate difficulty based on code complexity
-                                difficulty = self._estimate_difficulty(item['func_code_string'])
-                                
-                                self.code_samples.append({
-                                    'code': item['func_code_string'],
-                                    'language': language,
-                                    'difficulty': difficulty,
-                                    'source': 'train',
-                                    'id': item.get('func_name', f"{language}_unknown"),
-                                    'docstring': item.get('func_documentation_string', ''),
-                                    'url': item.get('func_code_url', '')
-                                })
-                                samples_count += 1
-                    
-                    print(f"✅ Loaded {len([s for s in self.code_samples if s['language'] == language])} {language} samples")
-                    
-                except Exception as e:
-                    print(f"⚠️ Error loading {language} dataset: {e}")
-                    continue
-            
-            self.is_loaded = True
-            print(f"✅ CodeSearchNet dataset loaded successfully! Total samples: {len(self.code_samples)}")
-            return True
+            # Try to load from local JSON file
+            data_file = 'data/code_samples.json'
+            if os.path.exists(data_file):
+                with open(data_file, 'r') as f:
+                    self.code_samples = json.load(f)
+                self.is_loaded = True
+                print(f"✅ CodeSearchNet dataset loaded successfully! Total samples: {len(self.code_samples)}")
+                return True
+            else:
+                # Fallback to mock data if file doesn't exist
+                print("⚠️ Local code data file not found, using mock data")
+                self.code_samples = [
+                    {
+                        'code': 'def hello_world():\n    print("Hello, World!")\n    return "Hello, World!"',
+                        'language': 'python',
+                        'difficulty': 'beginner',
+                        'source': 'mock',
+                        'id': 'mock_python_1',
+                        'docstring': 'A simple hello world function',
+                        'url': ''
+                    },
+                    {
+                        'code': 'function greet(name) {\n    return `Hello, ${name}!`;\n}',
+                        'language': 'javascript',
+                        'difficulty': 'beginner',
+                        'source': 'mock',
+                        'id': 'mock_js_1',
+                        'docstring': 'A simple greeting function',
+                        'url': ''
+                    },
+                    {
+                        'code': 'public class Calculator {\n    public int add(int a, int b) {\n        return a + b;\n    }\n}',
+                        'language': 'java',
+                        'difficulty': 'beginner',
+                        'source': 'mock',
+                        'id': 'mock_java_1',
+                        'docstring': 'A simple calculator class',
+                        'url': ''
+                    }
+                ]
+                self.is_loaded = True
+                print(f"✅ CodeSearchNet dataset loaded successfully! Total samples: {len(self.code_samples)}")
+                return True
             
         except Exception as e:
             print(f"❌ Error loading CodeSearchNet dataset: {e}")

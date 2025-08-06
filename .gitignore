@@ -235,4 +235,9 @@ docs/build/
 .DS_Store?
 ehthumbs.db
 Icon?
-Thumbs.db 
+Thumbs.db
+
+# Dataset files (large JSON files)
+data/
+*.json
+download_datasets.py 
